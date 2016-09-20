@@ -14,6 +14,14 @@ BOT_NAME = 'rugbyscraper'
 SPIDER_MODULES = ['rugbyscraper.spiders']
 NEWSPIDER_MODULE = 'rugbyscraper.spiders'
 
+ITEM_PIPELINES = {
+    'rugbyscraper.pipelines.MongoDBPipeline': 310,
+}
+
+MONGODB_SERVER = "localhost"
+MONGODB_PORT = 27017
+MONGODB_DB = "Rugby"
+# MONGODB_COLLECTION = "data"
 
 # Crawl responsibly by identifying yourself (and your website) on the user-agent
 #USER_AGENT = 'rugbyscraper (+http://www.yourdomain.com)'
