@@ -3,11 +3,15 @@
 import dateparser
 import re
 import csv
+import os
 
 from scrapy import Spider
 from scrapy.http import Request
 
 from scrapy.shell import inspect_response
+
+# TODO: remove
+import pprint
 
 
 class HistoricRugbyResultsSpider(Spider):
@@ -103,7 +107,93 @@ class HistoricRugbyResultsSpider(Spider):
                 # TODO: save
                 # print notes
                 # inspect_response(response, self)
+            elif 'teams' in tabname:
 
+                team = dict()
+                home_ = away_ = dict()
+                for i, td in enumerate(
+                    tab.xpath('.//*[@class="liveTblScorers"]')
+                ):
+                    k = td.xpath('./span/text()').extract_first().strip()
+                    v = td.xpath('./text()').extract_first().strip()
+                    # print ('*' * 40)
+                    # print (k, v)
+                    # print ('*' * 40)
+                    if i % 2:
+                        home_[k] = v
+                    else:
+                        away_[k] = v
+
+                # TODO: team not works
+                for i, team_ in enumerate(
+                    tab.xpath('.//div[@class="divTeams"]')
+                ):
+                    # inspect_response(response, self)
+                    team_info = list()
+                    for tr in team_.xpath(
+                        './/tr[contains(@class, "liveTblRow")]'
+                    ):
+                        a = tr.xpath('.//@href')
+                        if not a:
+                            continue
+                        player = {}
+                        href = a.extract_first()
+                        player['id'] = self.get_player_id(href)
+                        try:
+                            player['name'] = tr.xpath(
+                                './/a/text()').extract_first().strip()
+                        except:
+                            player['name'] = ''
+                        try:
+                            player['number'] = tr.xpath(
+                                './td[1]/text()').extract_first().strip()
+                        except:
+                            player['number'] = ''
+                        try:
+                            player['text'] = tr.xpath(
+                                './td[2]/text()').extract_first().strip()
+                        except:
+                            player['text'] = ''
+                        team_info.append(player)
+                    if i % 2:
+                        away_['team'] = team_info
+                    else:
+                        home_['team'] = team_info
+                team['home'] = home_
+                team['away'] = away_
+                # import pprint
+                # pprint.pprint(team)
+                # inspect_response(response, self)
+            elif 'match stats' in tabname:
+                match_stats = list()
+                # response.meta['tab'] = tab
+                # inspect_response(response, self)
+                for tr in tab.xpath('.//tr')[1:]:
+                    lst = tr.xpath('.//td/text()').extract()
+                    try:
+                        home_stat, stat_title, away_stat = lst
+                    except:
+                        continue
+                    stat = dict()
+                    stat['home'] = home_stat.strip()
+                    stat['away'] = away_stat.strip()
+                    stat['stat'] = stat_title.strip()
+                    match_stats.append(stat)
+
+                pprint.pprint(match_stats)
+                # inspect_response(response, self)
+
+
+
+
+
+
+
+
+    @staticmethod
+    def get_player_id(href):
+        name = os.path.basename(href)
+        return os.path.splitext(name)[0]
 
     def scrape_table(self, response):
         inspect_response(response, self)
