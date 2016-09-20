@@ -5,13 +5,13 @@ import re
 import csv
 import os
 
+from difflib import SequenceMatcher
 from scrapy import Spider
 from scrapy.http import Request
 
-from scrapy.shell import inspect_response
-
 # TODO: remove
 import pprint
+from scrapy.shell import inspect_response
 
 
 class HistoricRugbyResultsSpider(Spider):
@@ -42,15 +42,15 @@ class HistoricRugbyResultsSpider(Spider):
         rows.extend(self._get_table_rows(table, 'Domestic tournament'))
         for row in rows:
             # TODO: uncomment
-            for a in row.xpath('.//a[contains(text(), "Results")]'):
-                href = a.xpath('./@href').extract_first()
-                url = response.urljoin(href)
-                yield Request(url, callback=self.scrape_results)
-
-            # for a in row.xpath('.//a[contains(text(), "Table")]'):
-            #     url = response.urljoin(a.xpath('./@href').extract_first())
-            #     print url
-                # yield Request(url, callback=self.scrape_table)
+            # for a in row.xpath('.//a[contains(text(), "Results")]'):
+            #     href = a.xpath('./@href').extract_first()
+            #     url = response.urljoin(href)
+            #     yield Request(url, callback=self.scrape_results)
+            #
+            for a in row.xpath('.//a[contains(text(), "Table")]'):
+                url = response.urljoin(a.xpath('./@href').extract_first())
+                print url
+                yield Request(url, callback=self.scrape_standings_table)
 
     def scrape_results(self, response):
         for a in response.xpath('.//a[@class="fixtureTablePreview"]'):
@@ -82,6 +82,7 @@ class HistoricRugbyResultsSpider(Spider):
         table_values = []
         good_tabs = ['timeline', 'notes', 'teams', 'match stats']
         for tab in response.xpath('//div[contains(@class, "tabbertab")]'):
+            home_stats_processed = away_stats_processed = False
             tabname = tab.xpath('.//h2/text()').extract_first().strip().lower()
             if not (tabname in good_tabs or 'stats' in tabname):
                 continue
@@ -180,24 +181,74 @@ class HistoricRugbyResultsSpider(Spider):
                     stat['stat'] = stat_title.strip()
                     match_stats.append(stat)
 
-                pprint.pprint(match_stats)
+                # pprint.pprint(match_stats)
                 # inspect_response(response, self)
+            elif 'stats' in tabname:
+                home_or_away = self._home_or_away(home, away, tabname.strip(
+                    'stats'))
+                table = tab.xpath('.//table')[0]
+                if home_or_away is 'home' and not home_stats_processed:
+                    home_stats_processed = True
+                    # process_home
+                    # TODO: save
+                    home_stats = self.table_to_dict(table)
+                elif home_or_away is 'away' and not away_stats_processed:
+                    away_stats_processed = True
+                    # TODO: save
+                    away_stats = self.table_to_dict(table)
 
+    @staticmethod
+    def table_to_dict(table):
+        """
 
+        :param table: xmlized
+        :return:
+        """
+        table_values = []
+        for tr in table.xpath('.//tr'):
+            row = []
+            for td in tr.xpath('./td'):
+                text = ' '.join(
+                    [i.strip() for i in td.xpath(
+                        './/text()').extract()])
+                row.append(text)
+            table_values.append(','.join(row))
+        try:
+            dict_ = list(csv.DictReader(table_values))
+        except:
+            dict_ = {}
+        return dict_
 
-
-
-
-
+    @staticmethod
+    def _home_or_away(home, away, tab_name):
+        """
+        Infers if the stats tab belongs to home or away team.
+        :param home: str
+        :param away: str
+        :param tab_name: str
+        :return: str
+        >>> _home_or_away('Northampton Saints', 'Manchester', 'nthmp')
+        u'home'
+        """
+        rh = SequenceMatcher(None, tab_name, home).ratio()
+        ra = SequenceMatcher(None, tab_name, away).ratio()
+        return 'home' if rh > ra else 'away'
 
     @staticmethod
     def get_player_id(href):
         name = os.path.basename(href)
         return os.path.splitext(name)[0]
 
-    def scrape_table(self, response):
-        inspect_response(response, self)
-        pass
+    def scrape_standings_table(self, response):
+        # inspect_response(response, self)
+        try:
+            table = response.xpath('.//div[@id="scrumArticlesBox"]//table')[0]
+        except:
+            return
+        else:
+            standing_table = self.table_to_dict(table)
+            pprint.pprint(standing_table)
+            # inspect_response(response, self)
 
     def _get_table_rows(self, table, header_name):
         """
