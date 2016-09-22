@@ -17,7 +17,7 @@ sudo easy_install pip
 ```
 and then 
 ```
-pip install requirements.txt
+sudo pip install --ignore-installed --upgrade requirements.txt
 ```
 wait until all requirements are installed, then we are done. 
 
@@ -26,7 +26,12 @@ In the terminal go to `rugbyscraper` folder as wee did in installation step. Ent
 ```
 scrapy crawl historic
 ```
-now you should be able to scaping starts. It will take one to several hours for scraping job to be done. Once scraping is done, we can verify the database to see scraped data. In the terminal open mongoDB by typing
+now you should be able to scaping starts. It will take one to several hours for scraping job to be done. Once scraping is done, we can verify the database to see scraped data. 
+start the mongodb server
+```
+brew services start mongodb 
+```
+In the terminal open mongoDB by typing
 ```
 mongo
 ```

@@ -12,14 +12,18 @@ on Mac. To verify, open a terminal window and type</p>
 <pre><code>sudo easy_install pip
 </code></pre>
 <p>and then</p>
-<pre><code>pip install requirements.txt
+<pre><code>sudo pip install --ignore-installed --upgrade requirements.txt
 </code></pre>
 <p>wait until all requirements are installed, then we are done.</p>
 <h3><a id="Using_scraper_23"></a>Using scraper</h3>
 <p>In the terminal go to <code>rugbyscraper</code> folder as wee did in installation step. Enter the following command and scraping will start.</p>
 <pre><code>scrapy crawl historic
 </code></pre>
-<p>now you should be able to scaping starts. It will take one to several hours for scraping job to be done. Once scraping is done, we can verify the database to see scraped data. In the terminal open mongoDB by typing</p>
+<p>now you should be able to scaping starts. It will take one to several hours for scraping job to be done. Once scraping is done, we can verify the database to see scraped data.
+start the mongodb server</p>
+<pre><code>brew services start mongodb 
+</code></pre>
+<p>In the terminal open mongoDB by typing</p>
 <pre><code>mongo
 </code></pre>
 <p>in the shell, enter</p>

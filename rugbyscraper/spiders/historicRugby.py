@@ -65,7 +65,7 @@ class HistoricRugbyResultsSpider(Spider):
             '//td[@class="liveSubNavText"]//text()').extract()[1].strip()
         title_info = response.xpath(
             '//td[@class="liveSubNavText"]//text()').extract()[2].strip()
-        item['stadium'] = title_info.split(',')[0].strip()
+        item['stadium'] = title_info.split(',')[0].strip('- ')
         item['match_date'] = dateparser.parse(title_info.split(',')[1].strip())
         title = ' '.join(i.strip() for i in response.xpath(
             '//td[@class="liveSubNavText1"]//text()').extract()).strip(' (FT)')
@@ -112,9 +112,9 @@ class HistoricRugbyResultsSpider(Spider):
                     k = td.xpath('./span/text()').extract_first().strip()
                     v = td.xpath('./text()').extract_first().strip()
                     if i % 2:
-                        home_[k] = v
-                    else:
                         away_[k] = v
+                    else:
+                        home_[k] = v
 
                 for i, team_ in enumerate(
                     tab.xpath('.//div[@class="divTeams"]')
