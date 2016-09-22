@@ -10,6 +10,7 @@ class Result(Item):
     tournament = Field()
     stadium = Field()
     match_date = Field()
+    match_date_gmt = Field()
     home = Field()
     away = Field()
     home_final = Field()
