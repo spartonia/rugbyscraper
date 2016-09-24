@@ -64,13 +64,15 @@ class HistoricRugbyResultsSpider(Spider):
         item['tournament'] = response.xpath(
             '//td[@class="liveSubNavText"]//text()').extract()[1].strip()
         title_info = response.xpath(
-            '//td[@class="liveSubNavText"]//text()').extract()[2].strip()
+            '//td[@class="liveSubNavText"]//text()'
+        ).extract()[2].strip().strip(' ,')
         item['stadium'] = title_info.split(',')[0].strip('- ')
         dt = title_info.split(',')
         item['match_date_gmt'] = dateparser.parse(dt[1] + dt[-1])
-        item['match_date'] = dateparser.parse(dt[1] + dt[2])
+        item['match_date'] = dateparser.parse(dt[1] + dt[2].strip('local'))
         title = ' '.join(i.strip() for i in response.xpath(
-            '//td[@class="liveSubNavText1"]//text()').extract()).strip(' (FT)')
+            '//td[@class="liveSubNavText1"]//text()'
+        ).extract()).rstrip(' (FT)')
 
         home, item['home_final'] = re.split(
             '\(.+\)', title.split('-')[0])
