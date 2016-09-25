@@ -6,10 +6,12 @@ import dateparser
 import re
 import csv
 import os
+import re
 
 from difflib import SequenceMatcher
 from scrapy import Spider
 from scrapy.http import Request
+from scrapy.shell import inspect_response
 
 from rugbyscraper.items import Result, Table
 
@@ -66,13 +68,27 @@ class HistoricRugbyResultsSpider(Spider):
         title_info = response.xpath(
             '//td[@class="liveSubNavText"]//text()'
         ).extract()[2].strip().strip(' ,')
+
         item['stadium'] = title_info.split(',')[0].strip('- ')
-        dt = title_info.split(',')
-        item['match_date_gmt'] = dateparser.parse(dt[1] + dt[-1])
-        item['match_date'] = dateparser.parse(dt[1] + dt[2].strip('local'))
+        try:
+            dt = re.findall(r'(\d{1,2}\s\w+\s\d{4})', title_info)[0]
+        except Exception as e:
+            return
+        try:
+            local_ = ' ' + re.findall(
+                r'(\d{2}:\d{2})\slocal', title_info, re.I)[0]
+        except:
+            local_ = ''
+        try:
+            gmt_ = ' ' + re.findall(r'(\d{2}:\d{2})\sGMT', title_info, re.I)[0]
+        except:
+            gmt_ = ''
+
+        item['match_date_gmt'] = dateparser.parse(dt + gmt_)
+        item['match_date'] = dateparser.parse(dt + local_)
         title = ' '.join(i.strip() for i in response.xpath(
             '//td[@class="liveSubNavText1"]//text()'
-        ).extract()).rstrip(' (FT)')
+        ).extract()).replace('(FT)', '').strip()
 
         home, item['home_final'] = re.split(
             '\(.+\)', title.split('-')[0])
