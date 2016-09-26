@@ -35,6 +35,7 @@ class HistoricRugbyResultsSpider(Spider):
         rows.extend(self._get_table_rows(table, 'Major tournament'))
         rows.extend(self._get_table_rows(table, 'Major tour'))
         rows.extend(self._get_table_rows(table, 'Domestic tournament'))
+        response.meta['rows'] = rows
         for row in rows:
             for a in row.xpath('.//a[contains(text(), "Results")]'):
                 href = a.xpath('./@href').extract_first()
@@ -263,13 +264,16 @@ class HistoricRugbyResultsSpider(Spider):
         """
         rows = []
         reached = False
-        for row in table.xpath('.//tr'):
-            if row.xpath('./td[contains(text(), "%s")]' % header_name):
-                reached = True
-                continue
-            if row.xpath('.//td[@class="fixtureTblColHdr"]').extract():
+        for td in table.xpath('.//td'):
+            if td.xpath('./@class').extract_first() == "fixtureTblColHdr":
+                if td.xpath('./text()').extract_first() == header_name:
+                    reached = True
+                    continue
+            if (td.xpath('./@class').extract_first() == "fixtureTblColHdr"
+                and reached
+            ):
                 break
             if reached:
-                rows.append(row)
+                rows.append(td)
 
         return rows
