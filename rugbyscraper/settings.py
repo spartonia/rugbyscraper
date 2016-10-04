@@ -17,6 +17,9 @@ NEWSPIDER_MODULE = 'rugbyscraper.spiders'
 ITEM_PIPELINES = {
     'rugbyscraper.pipelines.MongoDBPipeline': 310,
 }
+# DOWNLOADER_MIDDLEWARES = {
+#     'rugbyscraper.middlewares.DropDuplicateUrlDownloaderMiddleware': 400,
+# }
 
 MONGODB_SERVER = "localhost"
 MONGODB_PORT = 27017
