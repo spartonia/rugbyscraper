@@ -117,15 +117,32 @@ class HistoricRugbyResultsSpider(Spider):
                     item['away_final'], away = title.split(
                         '-')[1].strip().split()
                 except:
-                    splt = title.rsplit('-', 1)[1]
-                    away = self._get_char(splt).split()
-                    item['away_final'] = self._get_num(splt)
+                    try:
+                        splt = title.rsplit('-', 1)[1]
+                        away = self._get_char(splt).split()
+                        item['away_final'] = self._get_num(splt)
+                    except:
+                        splt = response.xpath(
+                            '//td[@class="liveSubNavText1"]/text()').extract()
+                        home = splt[0].strip()
+                        away = splt[2].strip()
+                        hf, af = [i.strip() for i in splt[1].split('-')]
+                        item['home_final'], item['away_final'] = hf, af
             item['home'], item['away'] = home, away
             try:
                 item['home_halftime'], item['away_halftime'] = re.findall(
                     r'\((\d+)\)', title)
             except:
-                item['home_halftime'], item['away_halftime'] = 'NA', 'NA'
+                try:
+                    splt = response.xpath(
+                        '//td[@class="liveSubNavText1"]/span/text()').extract()
+                    hh, ah = splt[0].strip(), splt[1].strip()
+                except:
+                    hh, ah = 'NA', 'NA'
+                finally:
+                    item['home_halftime'], item['away_halftime'] = hh, ah
+
+
 
             table_values = []
             good_tabs = ['timeline', 'notes', 'teams', 'match stats']
@@ -229,6 +246,7 @@ class HistoricRugbyResultsSpider(Spider):
             yield item
         except Exception as e:
             self.missed_urls.update([response.url])
+            inspect_response(response, self)
 
     def spider_closed(self, spider):
         with open('./missingUrls.txt', 'w') as f:
